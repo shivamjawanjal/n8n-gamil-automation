@@ -44,14 +44,29 @@ By default, Oracle Cloud blocks all incoming ports except SSH (Port 22). You mus
 
 ---
 
-## Step 3: Point Your Domain DNS to Your OCI Public IP
+## Step 3: Get a Free Domain (2 Easy Options)
 
-1. Go to your DNS provider (Cloudflare, Namecheap, GoDaddy, DuckDNS, etc.).
-2. Add an **A Record**:
-   - **Name / Host**: `n8n` (or `@` for root domain)
-   - **Value / IPv4 Address**: `<YOUR_ORACLE_PUBLIC_IP>`
-   - **TTL**: Auto / 5 minutes
-3. *(If using Cloudflare: Set Proxy Status to "DNS Only" during initial SSL setup to let Caddy generate the certificate).*
+Caddy requires a domain name to automatically issue a valid Let's Encrypt SSL certificate. You can use either of these **100% free** methods:
+
+### Option A: `sslip.io` (Instant — Zero Signup Needed ⚡)
+`sslip.io` maps any IP address to a working domain automatically without creating an account or changing any DNS settings.
+- Simply append `.sslip.io` to your Oracle Cloud Public IP:
+  ```
+  <YOUR_ORACLE_PUBLIC_IP>.sslip.io
+  ```
+- *Example*: If your Oracle VM IP is `140.238.150.80`, your domain is:
+  ```
+  140.238.150.80.sslip.io
+  ```
+
+### Option B: `DuckDNS.org` (Free Custom Subdomain 🦆)
+1. Go to [https://www.duckdns.org/](https://www.duckdns.org/) and log in with your GitHub or Google account.
+2. Under **Domains**, type a subdomain name (e.g. `shivam-n8n`) and click **add domain**.
+3. In the **current ip** box, enter your **Oracle Cloud Public IP** and click **update ip**.
+4. Your free domain will be:
+   ```
+   shivam-n8n.duckdns.org
+   ```
 
 ---
 
