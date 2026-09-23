@@ -1,0 +1,9 @@
+.env
+.env.prod
+.env.local
+*.log
+n8n_data/
+caddy_data/
+caddy_config/
+.DS_Store
+Thumbs.db
