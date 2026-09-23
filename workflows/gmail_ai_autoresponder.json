@@ -1,0 +1,183 @@
+{
+  "name": "Gmail AI Auto-Responder & Classifier",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {
+          "readStatus": "unread"
+        }
+      },
+      "id": "1c7f4a20-a291-4c74-a67e-9764835824c1",
+      "name": "Gmail Trigger (New Unread Email)",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "gmail_oauth2_account",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "6a96e622-6b3e-48a0-bb65-ef56041a7da0",
+              "leftValue": "={{ $json.from }}",
+              "rightValue": "no-reply",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            },
+            {
+              "id": "00c7a5ba-fb36-41ea-bfbe-09858548a313",
+              "leftValue": "={{ $json.from }}",
+              "rightValue": "noreply",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "78b4a761-9c88-466d-8a03-7cb521a084c7",
+      "name": "Filter Out Automated/No-Reply",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        480,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "893c5d80-53bc-4fc4-bb50-5fa3a4d95ee0",
+              "name": "senderEmail",
+              "value": "={{ $json.from }}",
+              "type": "string"
+            },
+            {
+              "id": "904b7e80-62cd-4cd5-bc61-6eb4b5e06ff1",
+              "name": "emailSubject",
+              "value": "={{ $json.subject }}",
+              "type": "string"
+            },
+            {
+              "id": "a15c8f90-73de-4de6-cd72-7fc5c6f17aa2",
+              "name": "emailSnippet",
+              "value": "={{ $json.snippet }}",
+              "type": "string"
+            },
+            {
+              "id": "b26d9a01-84ef-4ef7-de83-8ad6d7028bb3",
+              "name": "messageId",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "c37eaa12-95f0-4fa8-ef94-9be7e8139cc4",
+              "name": "threadId",
+              "value": "={{ $json.threadId }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4d16bc89-3ae8-4be3-8557-0477174dbd20",
+      "name": "Extract Email Details",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        720,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "createDraft",
+        "emailType": "text",
+        "subject": "=Re: {{ $json.emailSubject }}",
+        "message": "=Hi,\n\nThank you for reaching out regarding \"{{ $json.emailSubject }}\". We have received your inquiry and will get back to you shortly.\n\nBest regards,\nAutomated Assistant",
+        "options": {
+          "threadId": "={{ $json.threadId }}"
+        }
+      },
+      "id": "f519be7c-a496-48c0-82d2-c2da5fb43210",
+      "name": "Create Gmail Draft Reply",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        980,
+        280
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "gmail_oauth2_account",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Gmail Trigger (New Unread Email)": {
+      "main": [
+        [
+          {
+            "node": "Filter Out Automated/No-Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Out Automated/No-Reply": {
+      "main": [
+        [
+          {
+            "node": "Extract Email Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Email Details": {
+      "main": [
+        [
+          {
+            "node": "Create Gmail Draft Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

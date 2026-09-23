@@ -16,6 +16,7 @@ services:
       - N8N_UNVERIFIED_PACKAGES_ENABLED=${N8N_UNVERIFIED_PACKAGES_ENABLED:-true}
     volumes:
       - n8n_data:/home/node/.n8n
+      - ./workflows:/home/node/workflows
 
 volumes:
   n8n_data:

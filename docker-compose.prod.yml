@@ -35,6 +35,7 @@ services:
       - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY:-}
     volumes:
       - n8n_data:/home/node/.n8n
+      - ./workflows:/home/node/workflows
     networks:
       - n8n_net
 
