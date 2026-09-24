@@ -1,0 +1,77 @@
+{
+  "name": "Telegram - Add Sender Email Account",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "7b812a34-912c-4f12-89cd-123456789abc",
+      "name": "Telegram Trigger (New Message)",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        260,
+        300
+      ],
+      "webhookId": "telegram-add-account-webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = ($input.first().json.message?.text || '').trim();\nconst chatId = $input.first().json.message?.chat?.id;\n\nconst staticData = $getWorkflowStaticData('global');\nif (!staticData.accounts) staticData.accounts = [];\nif (!staticData.usage) staticData.usage = {};\n\nlet reply = '';\n\n// 1. COMMAND: VIEW ALL ACCOUNTS (/list)\nif (text.toLowerCase() === '/list' || text.toLowerCase() === 'list' || text.toLowerCase() === '/status') {\n  if (staticData.accounts.length === 0) {\n    reply = 'ℹ️ No email accounts stored yet.\\n\\nSend: mail-yourname@gmail.com, password-yourpassword to add one.';\n  } else {\n    reply = `📋 **Active Sender Accounts (${staticData.accounts.length}):**\\n\\n`;\n    staticData.accounts.forEach((acc, i) => {\n      const sent = staticData.usage[acc.email] || 0;\n      reply += `${i + 1}. 📧 \\`${acc.email}\\`\\n   ↳ Sent today: **${sent}/30** emails\\n\\n`;\n    });\n    reply += '💡 To delete an account, send:\\n`/delete email@gmail.com`';\n  }\n}\n\n// 2. COMMAND: DELETE AN ACCOUNT (/delete email)\nelse if (text.toLowerCase().startsWith('/delete') || text.toLowerCase().startsWith('/remove') || text.toLowerCase().startsWith('delete')) {\n  const targetEmail = text.replace(/(\\/delete|\\/remove|delete)/i, '').trim().toLowerCase();\n  const initialCount = staticData.accounts.length;\n  staticData.accounts = staticData.accounts.filter(a => a.email.toLowerCase() !== targetEmail);\n  \n  if (staticData.accounts.length < initialCount) {\n    delete staticData.usage[targetEmail];\n    reply = `🗑️ Successfully deleted: ${targetEmail}\\n\\n📊 Remaining active accounts: ${staticData.accounts.length}`;\n  } else {\n    reply = `⚠️ Email not found: ${targetEmail}\\n\\nSend /list to see all stored email addresses.`;\n  }\n}\n\n// 3. COMMAND: ADD / UPDATE AN ACCOUNT (mail-..., password-...)\nelse {\n  const mailMatch = text.match(/mail[-:\\s]+([^,\\n\\s]+)/i);\n  const passMatch = text.match(/password[-:\\s]+(.+)/i);\n\n  if (mailMatch && passMatch) {\n    const email = mailMatch[1].trim();\n    const password = passMatch[1].trim();\n    const existingIndex = staticData.accounts.findIndex(a => a.email.toLowerCase() === email.toLowerCase());\n    \n    if (existingIndex >= 0) {\n      staticData.accounts[existingIndex].password = password;\n      reply = `🔄 Updated password for: ${email}`;\n    } else {\n      staticData.accounts.push({ email: email, password: password });\n      if (staticData.usage[email] === undefined) staticData.usage[email] = 0;\n      reply = `✅ Successfully added sender email!\\n\\n📧 Email: ${email}\\n📊 Total active sender accounts: ${staticData.accounts.length}`;\n    }\n  } else {\n    reply = '🤖 **Telegram Email Manager Commands:**\\n\\n➕ **Add:**\\n`mail-xyz@gmail.com, password-apppassword`\\n\\n📋 **View All:**\\n`/list`\\n\\n🗑️ **Delete:**\\n`/delete xyz@gmail.com`';\n  }\n}\n\nreturn {\n  json: {\n    chatId: chatId,\n    reply: reply\n  }\n};\n"
+      },
+      "id": "8c923b45-a23d-4e23-90de-234567890bcd",
+      "name": "Parse & Store Email Account",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chatId }}",
+        "text": "={{ $json.reply }}",
+        "additionalFields": {}
+      },
+      "id": "9da34c56-b34e-4f34-a1ef-345678901cde",
+      "name": "Send Telegram Confirmation",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        740,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Telegram Trigger (New Message)": {
+      "main": [
+        [
+          {
+            "node": "Parse & Store Email Account",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse & Store Email Account": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
